@@ -17,6 +17,7 @@
 #endif
 
 #include <clog/clog.h>
+#include <crosssocket.h>
 
 #ifndef BUFFER_SIZE
 #define BUFFER_SIZE 256

