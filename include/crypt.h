@@ -1,4 +1,4 @@
 #pragma once
 
-char* decrypt(char* msg);
-const char* encrypt(const char* msg);
+char* rat_decrypt(char* msg);
+const char* rat_encrypt(const char* msg);

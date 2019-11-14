@@ -1,0 +1,23 @@
+[
+    {
+        "name": "Emscripten",
+        "toolchainFile": "/usr/local/Cellar/emscripten/HEAD-0ebbdcf/libexec/cmake/Modules/Platform/Emscripten.cmake",
+        "cmakeSettings": {
+            "CMAKE_INSTALL_PREFIX": "${workspaceFolder}/build/Wasm",
+            "CMAKE_PREFIX_PATH": "${workspaceFolder}/build/Wasm",
+            "CMAKE_FIND_ROOT_PATH": "${workspaceFolder}/build/Wasm"
+        }
+    },
+    {
+        "name": "Clang",
+        "compilers": {
+            "CC": "/usr/bin/clang",
+            "CXX": "/usr/bin/clang++"
+        },
+        "cmakeSettings": {
+            "CMAKE_INSTALL_PREFIX": "${workspaceFolder}/build/64",
+            "CMAKE_PREFIX_PATH": "${workspaceFolder}/build/64",
+            "CMAKE_FIND_ROOT_PATH": "${workspaceFolder}/build/64"
+        }
+    }
+]

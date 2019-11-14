@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+
+if [ $# -lt 2 ]; then
+    echo "Usage: rat_depinstall <wa|64> <prefix>"
+    exit 1
+fi
+
+if ! [ "${2:0:1}" = "/" ]; then
+    echo "Use absolute path for prefix_dir";
+    exit 1
+fi
+
+check_packages(){
+    if [ $# -eq 0 ]; then
+        echo "deptool: insufficient arguments"
+        exit;
+    fi
+
+    for dep in $@; do
+        1>&/dev/null which $dep
+        if [ $? -ne 0 ]; then
+            1>&2 echo "FATAL: $dep does not exist"
+            # set error code
+            exit 1
+        fi
+    done
+}
+
+check_packages realpath dirname libtool emcc emconfigure emmake make git hg autoconf automake m4 sed awk autoreconf pkg-config
+
+export script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+export root_dir="$script_dir"
+export prefix_dir="$2"
+export thirdparty_source_dir="`pwd`/.thirdparty"
+export thirdparty_dir="$thirdparty_source_dir"
+export thirdparty_64_dir="$thirdparty_dir"64
+export thirdparty_wa_dir="$thirdparty_dir"wa
+
+# WARNING: Higher values of 'cores' value causes the system to overheat and starts the fan.
+# Increase this value at your own risk
+cores=12
+
+mkdir -p $thirdparty_dir
+
+# args: <url> <commit> [patch]
+clone_package(){
+    repo_name=`basename $1 .git`
+    if [ $# -lt 2 ];
+    then
+        echo "clone: Insufficient arguments $@"
+        return 1
+    fi
+
+    # changes to temp dir
+    cd $thirdparty_dir
+
+    echo -n "Downloading $repo_name"
+
+    if [ -d $repo_name ]; then
+        # skipping clone, directory exists
+        echo -e "\r\x1B[0KDownloading $repo_name ✔"
+    else
+        1>&/dev/null git clone $1
+        if [ $? -ne 0 ]; then
+            echo -e "\r\x1B[0KDownloading $repo_name ✗"
+            # set error code
+            return 1
+        else
+            echo -e "\r\x1B[0KDownloading $repo_name ✔"
+        fi
+    fi
+    # checkout version
+    cd $thirdparty_dir/$repo_name
+    1>&/dev/null git checkout $2
+
+    if [ $# -gt 2 ]; then
+        echo "Applying patches $repo_name"
+        patches=${@:3:$#}
+        for patch in $patches; do
+            1>&/dev/null git apply $root_dir/patch/$patch
+        done
+    fi
+    cd $thirdparty_dir
+}
+
+# args: <repo_name> <command>
+install_package(){
+    if [ $# -lt 2 ]; then
+        echo "configure: insufficient arguments"
+        return 1
+    fi
+
+    # change to repo_dir
+    cd "$1"
+
+    1>&/dev/null `$2`
+    1>&/dev/null make -j$cores
+    1>&/dev/null make install
+    if [ $? -eq 0 ]; then
+        echo "Installed $1"
+    fi
+}
+
+autoreconf_configure(){
+    cd $1
+    echo "$1: autoreconf"
+    1>&/dev/null autoreconf -fiv
+    cd $root_dir
+}
+
+autogen_configure(){
+    current_dir=`pwd`
+    cd $1
+    1>&/dev/null ./autogen.sh
+    echo "$1: autogen.sh"
+    cd "$current_dir"
+}
+
+download_package(){
+    cd $thirdparty_dir
+    file_name=${1##*/}
+    folder_name=(${file_name//.zip/ })
+
+    if [ $# -lt 2 ];
+    then
+        echo "_download: Insufficient arguments $@"
+        return 1
+    fi
+
+    if [ -d $file_name ]; then
+        # skipping clone, directory exists
+        echo "WARNING: Directory already exists, skipping download."
+    else
+        echo "Downloading $2"
+        # 1>&/dev/null git clone $1
+        1>&/dev/null wget $1 -O "$file_name"
+        echo "Extracting to $file_name"
+        1>&/dev/null unzip "$file_name"
+        mv "$folder_name" "$thirdparty_dir/$2"
+        if [ $? -ne 0 ]; then
+            echo "Download failed, try again later"
+            # set error code
+            return 1
+        fi
+    fi
+
+    cd "$thirdparty_dir/$2"
+
+    if [ $# -gt 2 ]; then
+        echo "Applying patches $file_name"
+        patches=${@:3:$#}
+        for patch in $patches; do
+            1>&/dev/null git apply $root_dir/patch/$patch
+        done
+    fi
+}
+
+clone_all(){
+    clone_package https://github.com/bharatvaj/clog master
+    clone_package https://github.com/bharatvaj/crosssocket master
+}
+
+compile_wa(){
+}
+
+cmake_install(){
+    cd "$thirdparty_64_dir/$1"
+    cmake -DCMAKE_INSTALL_PREFIX=$prefix_dir .
+    make install
+    # echo "$thirdparty_64_dir/$1 && cmake  -DCMAKE_INSTALL_PREFIX . && make install"
+    # cd " && cmake -DCMAKE_INSTALL_PREFIX=$prefix_dir . && make install"
+}
+
+compile_64(){
+    cmake_install clog
+    cmake_install crosssocket
+}
+
+clone_all
+echo "Creating output directories"
+mkdir -p $thirdparty_64_dir
+mkdir -p $thirdparty_wa_dir
+
+# create copies for every architecture
+echo "Creating Backup"
+cp -rf $thirdparty_dir/* $thirdparty_64_dir
+cp -rf $thirdparty_dir/* $thirdparty_wa_dir
+
+if [ $1 == 64 ]; then
+    # build 64 version
+    thirdparty_dir="$thirdparty_64_dir"
+    compile_64
+else
+    # wa version
+    thirdparty_dir="$thirdparty_wa_dir"
+    compile_wa
+fi

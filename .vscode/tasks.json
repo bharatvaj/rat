@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install dependencies (WebAssembly)",
+            "type": "shell",
+            "command": [
+                "${workspaceFolder}/.vscode/scripts/rat_depinstall wa ${workspaceFolder}/build/Wasm"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "dependsOn": "buildFolder",
+            "problemMatcher": []
+        },
+        {
+            "label": "Install dependencies (Host 64)",
+            "type": "shell",
+            "command": [
+                "${workspaceFolder}/.vscode/scripts/rat_depinstall 64 ${workspaceFolder}/build/64"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "dependsOn": "buildFolder",
+            "problemMatcher": []
+        },
+        {
+            "label": "buildFolder",
+            "type": "shell",
+            "command": [
+                "mkdir -p ${workspaceFolder}/build"
+            ],
+            "presentation": {
+                "echo": false,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        }
+    ]
+}
